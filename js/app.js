@@ -22,7 +22,7 @@ const filtro = document.querySelector('#filtro-dificultad');
 const formulario = document.querySelector('#form-inscripcion');
 const mensaje = document.querySelector('#mensaje');
 const listaInscripciones = document.querySelector('#mis-inscripciones');
-const almacen = crearAlmacen('club-basico');      // componente ya desarrollado (almacen.js)
+const almacen = crearAlmacen('club');      // componente ya desarrollado (almacen.js)
 const audioBienvenida = document.querySelector('#audioBienvenida');
 const botonAudio = document.querySelector('#boton-audio');
 const rejilla = document.querySelector('#rejilla');
@@ -40,6 +40,9 @@ const rejilla = document.querySelector('#rejilla');
  * @returns {string} "baja", "media" o "alta".
  */
 function calcularDificultad(desnivel) {
+  if (desnivel < 500) {return "baja"}
+  else if (desnivel < 1200) {return "media"}
+  else {return "alta"}  
   // TODO
 }
 
@@ -52,6 +55,9 @@ function calcularDificultad(desnivel) {
  */
 function calcularDuracion(km, desnivel, kmPorHora = 4) {
   // TODO  Pista para redondear a un decimal: Math.round(horas * 10) / 10
+  let horas = (km / kmPorHora) + (desnivel / 400);
+  horas = Math.round(horas * 10) / 10;
+  return horas;
 }
 
 
@@ -76,6 +82,10 @@ function crearTarjeta(ruta) {
   desnivel.textContent = `${ruta.desnivel} m`;
   const plazas = document.createElement('p');
   plazas.textContent = `${ruta.plazas} plazas libres`;
+  const nivel = document.createElement('p');
+ nivel.textContent = `Dificultad: ${calcularDificultad(ruta.desnivel)}`;
+ const duracion = document.createElement('p');
+ duracion.textContent = `Duración aprox.: ${calcularDuracion(ruta.km, ruta.desnivel)} h`;
 
  const contenedor = document.createElement('div');
  contenedor.classList.add('tarjeta');
@@ -84,7 +94,8 @@ function crearTarjeta(ruta) {
  contenedor.appendChild(km);
  contenedor.appendChild(desnivel);
  contenedor.appendChild(plazas);
-
+ contenedor.appendChild(nivel);
+ contenedor.appendChild(duracion);
  return contenedor;
 
 
@@ -145,23 +156,72 @@ function rellenarSelectorRutas() {
  */
 function validarInscripcion(nombre, plazas, ruta) {
   const errores = [];
-  // TODO
-  return errores;
-}
-
+  if(nombre.trim() === '') {
+    errores.push('El nombre es obligatorio');
+  }
+  let plazasDisponibles = RUTAS[ruta].plazas;
+  if(plazasDisponibles < plazas){
+    errores.push('No hay suficientes plazas disponibles');
+   }
+return errores;
+  }
 /**
  * Se ejecuta al enviar el formulario: lee los campos, valida y, si todo es
  * correcto, guarda la inscripción con el almacén y la muestra.
  * @param {SubmitEvent} evento
  */
 function inscribir(evento) {
-  evento.preventDefault();          // evita que la página se recargue
-  // TODO
+  evento.preventDefault();    
+  let nombre = document.querySelector('#nombre').value;
+  let email = document.querySelector('#email').value;
+  let ruta = document.querySelector('#ruta').value;
+  let plazas = document.querySelector('#plazas').value;
+  validacion = validarInscripcion(nombre, plazas, ruta);
+  // Si hay errores, los mostramos y salimos de la función
+  if(validacion.length > 0){
+    mensaje.textContent = " "
+    validacion.forEach(men => {
+      mensaje.innerHTML += men + "<br>"
+      
+      
+    })
+   mensaje.className = "mensaje mensaje-error"
+   
+  return;
+  }
+
+  // Si todo es correcto, guardamos la inscripción y actualizamos la lista
+  const inscripciones = almacen.leer('inscripciones', []) 
+  inscripciones.push({ 
+    nombre: nombre.trim(),
+    
+    ruta: RUTAS[ruta].nombre,
+    plazas: plazas
+  });
+  almacen.guardar('inscripciones', inscripciones);
+// MOstramos un mensaje de éxito y limpiamos el formulario
+mensaje.textContent = `Inscripción guardada: ${plazas} plazas en ${RUTAS[ruta].nombre}`
+mensaje.className = "mensaje mensaje-ok"
+
+pintarInscripciones();
 }
 
 /** Pinta la lista «Mis inscripciones» con lo que hay guardado en el almacén. */
 function pintarInscripciones() {
-  // TODO
+  // limpiamos la lista y la rellenamos con lo que hay en el almacén
+  listaInscripciones.textContent = "";
+  const inscripciones = almacen.leer('inscripciones', []);
+  inscripciones.forEach(ins => {
+    const li = document.createElement('li');
+    li.textContent = `${ins.nombre} — ${ins.ruta} - ${ins.plazas} plazas`;
+    listaInscripciones.appendChild(li);})
+
+    // Si no hay inscripciones, mostramos un mensaje
+    if(inscripciones.length === 0){
+      const li = document.createElement('li');
+      li.textContent = "No hay inscripciones";
+      listaInscripciones.append(li);
+    }
 }
 
 
@@ -185,7 +245,12 @@ function alternarAudio() {
   });
 /** Resalta durante 3 segundos la tarjeta de la ruta del mes (RUTA_DEL_MES). */
 function destacarRutaDelMes() {
-  // TODO
+  setTimeout(() => {
+    tarjetas.classList.remove('destacada');
+  }, 3000);
+  const tarjetas = rejilla.children[RUTA_DEL_MES];
+  tarjetas.classList.add('destacada');
+
 }
 
 
