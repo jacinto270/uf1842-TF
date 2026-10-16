@@ -107,6 +107,7 @@ function crearTarjeta(ruta) {
  * @param {Object[]} rutas Array de rutas que hay que mostrar.
  */
 function pintarRutas(rutas) {
+  rejilla.textContent = "";
   rutas.forEach(ruta => {
     rejilla.appendChild(crearTarjeta(ruta))
   });
@@ -125,7 +126,11 @@ function pintarRutas(rutas) {
  * @returns {Object[]} Un array nuevo; RUTAS no se modifica.
  */
 function filtrarPorDificultad(rutas, nivel) {
-  // TODO
+  if(nivel === "todas") {
+    return rutas
+  }
+  // filtra las rutas según la dificultad calculada con calcularDificultad
+  else {return rutas.filter(ruta => calcularDificultad(ruta.desnivel) === nivel)} 
 }
 
 
